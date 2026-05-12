@@ -1,0 +1,14 @@
+*.sln
+
+.devcontainer/
+aoi_env/
+private/
+
+**/build/
+**/CMakeFiles/
+**/tests/
+
+**/bin/
+**/obj/
+**/Scripts/
+

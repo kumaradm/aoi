@@ -1,44 +1,54 @@
-﻿using AoiSystem.Orchestrator.Interop;
+﻿using System;
+using System.IO;
+using Microsoft.Extensions.Configuration;
+using AoiSystem.Orchestrator.Interop;
 
 class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("--- Industrial PCB Inspection System Starting ---");
+        string projectRoot = GetProjectRoot();
 
-        // 1. Initialize the Bridge (Loads the 1650 Ti GPU with your Engine)
-        using var aoi = new ImageProcessorInterop(
-            "/home/kumaradm/portfolio/aoi-on-jetson/private/tests/basler_emulator_test/images/cat_resized.png", 
-            "/home/kumaradm/portfolio/aoi-on-jetson/src/AoiSystem.ImageProcessor/models/pcb_inspection_model.engine");
+        var config = new ConfigurationBuilder()
+            // .SetBasePath(AppContext.BaseDirectory)
+            .SetBasePath(projectRoot)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
 
-        int pcbLength = 4096;  // Total length of the PCB in pixels
-        int sliceHeight = 512; // Height of each camera grab
-        int strideY = 480;     // 112px overlap for vertical unity
+        using var aoi = new ImageProcessorContext(
+            camId:  config["AoiSettings:CameraId"],
+            enginePath: config["AoiSettings:EnginePath"]
+        );
 
-        // 2. The Conveyor Loop (Vertical Scanning)
-        for (int currentY = 0; currentY <= pcbLength - sliceHeight; currentY += strideY)
+        var detections = aoi.Inspect(resize: true);
+
+        Console.WriteLine($"Found {detections.Length} object(s):");
+        foreach (var det in detections)
         {
-            Console.Write($"Scanning Y-Pos: {currentY:D4} | ");
-
-            // C++ handles the Horizontal tiling (4096 width) internally!
-            int result = aoi.InspectSlice(currentY);
-
-            if (result == -1)
-            {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Status: CLEAR");
-            }
-            else
-            {
-                // COCO Class 15 is 'Cat'. In our simulation, a Cat = Defect.
-                string defectName = (result == 15) ? "CRITICAL DEFECT (CAT)" : $"UNKNOWN OBJ (ID:{result})";
-                
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Status: {defectName} DETECTED");
-            }
-            Console.ResetColor();
+            Console.WriteLine(
+                $"  {det.ClassName,-20} " +
+                $"score={det.Score:F2}  " +
+                $"box=({det.X:F0},{det.Y:F0}) {det.W:F0}x{det.H:F0}");
         }
 
-        Console.WriteLine("--- Inspection Complete ---");
+        aoi.SaveInspectedFrame("result.png");
+    }
+
+    private static string GetProjectRoot()
+    {
+        var currentDir = new DirectoryInfo(AppContext.BaseDirectory);
+
+        // Walk up the directory tree looking for a solution or project file
+        while (currentDir != null)
+        {
+            if (currentDir.GetFiles("*.sln").Length > 0 || currentDir.GetFiles("*.csproj").Length > 0)
+            {
+                return currentDir.FullName;
+            }
+            currentDir = currentDir.Parent;
+        }
+
+        // Fallback to BaseDirectory if we can't find it (e.g., in a production/published environment)
+        return AppContext.BaseDirectory;
     }
 }

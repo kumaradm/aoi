@@ -4,34 +4,32 @@
 
 // public sealed class PipelineService : IPipelineService
 // {
-//     private readonly IAoiMcuManagerService _motionController;
+//     private readonly IMcuManagerService _mcuManager;
 //     private readonly IImageProcessorInteropService _imageProcessor;
-//     private readonly AoiConfig _config;
-//     private readonly ILogger<AoiPipelineService> _logger;
+//     private readonly ILogger<PipelineService> _logger;
 
 //     public AoiPipelineService(
-//         IMotionControlService motionController,
+//         IMcuManagerService mcuManager,
 //         IImageProcessorInteropService imageProcessor,
 //         AoiConfig config,
 //         ILogger<AoiPipelineService> logger
 //     )
 //     {
-//         _motionController = motionController;
+//         _mcuController = mcuController;
 //         _imageProcessor = imageProcessor;
-//         _config = config;
 //         _logger = logger;
 //     }
 
-//     public void Initialize()
+//     public void Init()
 //     {
 
-//         var ok = _motionController.Initialize(_config.MotionControllerComPort, _config.MotionControllerBaudRate);
+//         var ok = _mcuManager.Init(_config.McuPortName, _config.McuBaudRate);
 //         if (!ok)
 //         {
 //             _logger.LogError("Failed to initialize motion controller.");
 //             throw new InvalidOperationException("Failed to initialize motion controller.");
 //         }
-//         ok = _imageProcessor.Initialize(_config.ImageProcessorEndpoint);
+//         ok = _imageProcessor.Init(_config.ImageProcessorEndpoint);
 //         if (!ok)
 //         {
 //             _logger.LogError("Failed to initialize image processor.");
@@ -40,9 +38,10 @@
 //         _logger.LogInformation("AOI pipeline service initialized.");
 //     }
 
-//     public async Task ScanBoardAsync(CancellationToken cts, int normalizedBoardWidth, int normalizedBoardHeight)
+//     public async Task InpectAsync(CancellationToken cts)
 //     {
 //         _logger.LogInformation("Starting board scan.");
+//         await _imageProcessor.
 
 //     }
 // }

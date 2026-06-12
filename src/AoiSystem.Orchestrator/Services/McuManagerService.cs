@@ -1,3 +1,6 @@
+using System.Text;
+using Microsoft.Extensions.Logging;
+
 namespace AoiSystem.Orchestrator.Services;
 
 public class McuManagerService : IMcuManagerService, IDisposable
@@ -18,19 +21,41 @@ public class McuManagerService : IMcuManagerService, IDisposable
         _serialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
     }
 
-    public void Start()
+    public void Init()
     {
         if (!_serialPort.isOpen) _serialPort.Open();
     }
 
-    public void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+    public async Task WaitForDataAsync(TimeSpan timeout, CancellationToken ct)
     {
-        SerialPort sp = (SerialPort)sender;
-        string data = sp.ReadExisting();
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(timeout);
 
-        if (data == "TRIGGER_ON")
+        using var reader = new StreamReader(_serialPort.BaseStream, Encoding.ASCII);
+
+        try
         {
-            OnPcbDetected?.Invoke();
+            _logger.LogInformation("Waiting for MCU trigger signal (Timeout: {timeout}s...)", timeout.TotalSeconds);
+
+            while (!cts.Token.IsCancellationRequested)
+            {
+                string? line = await reader.ReadLineAsync(cts.Token);
+
+                if (line != null)
+                {
+                    var cleanLine = line.Trim();
+
+                    if (cleanLine.Contains("TRIGGER"))
+                    {
+                        
+                    }
+                }
+            }
         }
+    }
+
+    public void SendCommand(string command)
+    {
+        Console.WriteLine(command);
     }
 }

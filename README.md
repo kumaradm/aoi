@@ -5,8 +5,7 @@
 
 ---
 
-![Platform](https://img.shields.io/badge/platform-WSL%20%7C%20Jetson%20Orin%20NX-blue)
-![C++](https://img.shields.io/badge/C++-20-blue)
+![C++](https://img.shields.io/badge/C++-23-blue)
 ![.NET](https://img.shields.io/badge/.NET-10-purple)
 ![Python](https://img.shields.io/badge/Python-3.12-yellow)
 ![Status](https://img.shields.io/badge/status-In%20Development-orange)
@@ -43,7 +42,7 @@ development on WSL using Pylon SDK software emulation.
 
 ### Hardware
 
-![System Architecture](./docs/images/aoi-system-architecture.png)
+![Hardware Architecture](./docs/images/aoi-hardware-architecture.png)
 
 The **Photoelectric Sensor** detects an incoming board and signals the
 **Microcontroller**, which coordinates the hardware layer — commanding
@@ -64,7 +63,7 @@ in real time where the full inspection pipeline runs.
 | Layer | Technology | Reason |
 |---|---|---|
 | Orchestrator | C# .NET 10 | Async pipeline control, clean DI pattern |
-| Image Processor | C++ 20 | Performance-critical, direct memory control |
+| Image Processor | C++ 23 | Performance-critical, direct memory control |
 | Camera SDK | Basler Pylon 8.x | Industry standard for machine vision |
 | ML Inference | YOLO26m + TensorRT | NMS-free, GPU-optimized for edge deployment |
 | ML Training | Python, Ultralytics | Fine-tuned on DeepPCB dataset |
@@ -84,7 +83,7 @@ AoiSystem/
 │       └── aoi-software-architecture.png # Software component diagram
 │
 ├── src/
-│   ├── AoiSystem.ImageProcessor/         # C++ shared library (.so)
+│   ├── AoiSystem.Vision/                 # Vision Layer
 │   │   ├── libs/
 │   │   │   └── libimage_processor.so     # Compiled output
 │   │   ├── models/
@@ -92,13 +91,20 @@ AoiSystem/
 │   │   ├── src/
 │   │   │   ├── ai/
 │   │   │   │   ├── InferenceModule.cpp   # YOLO26m TensorRT inference
-│   │   │   │   └── InferenceModule.hpp
+│   │   │   │   ├── InferenceModule.hpp
+│   │   │       └── ModelConfig.hpp
 │   │   │   ├── camera/
 │   │   │   │   ├── CameraModule.cpp      # Basler Pylon 8.x line scan
 │   │   │   │   └── CameraModule.hpp
-│   │   │   ├── process/
-│   │   │   │   └── preprocess.cu         # CUDA image preprocessing
-│   │   │   └── ImageProcessor.cpp        # Pipeline entry point + C API
+│   │   │   ├── pipeline/
+│   │   │   │   ├── Snowflake.hpp        # CUDA image postprocessing
+│   │   │   │   ├── TSQueue.hpp          # CUDA image preprocessing
+│   │   │   │   ├── VisionPipeline.cpp   # Vision layer pipeline
+│   │   │   │   ├── VisionPipeline.hpp
+│   │   │   │   └──
+│   │   │   └── process/
+│   │   │       ├── postprocess.cu        # CUDA image postprocessing
+│   │   │       └── preprocess.cu         # CUDA image preprocessing
 │   │   └── CMakeLists.txt
 │   │
 │   └── AoiSystem.Orchestrator/           # C# CLI orchestrator

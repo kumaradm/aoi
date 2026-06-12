@@ -54,7 +54,7 @@ in real time where the full inspection pipeline runs.
 
 ### Software
 
-![Software Architecture](./docs/images/aoi-software-architecture.png)
+![Software Architecture](./docs/images/aoi-software-architecture-v2.png)
 
 ---
 
